@@ -1,35 +1,19 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import ErrorBoundary from './components/ErrorBoundary';
 import PageLoader from './components/PageLoader';
-import { CheckCircle2, AlertCircle, Heart, ChefHat, LogIn } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Heart } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
 // Production Code-Splitting: Lazy load major view chunks
 const Home = lazy(() => import('./pages/Home'));
 const AddRecipe = lazy(() => import('./pages/AddRecipe'));
 const MyRecipes = lazy(() => import('./pages/MyRecipes'));
-const AuthModal = lazy(() => import('./components/AuthModal'));
 
 export default function App() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'my-recipes' | 'add'
   const [toast, setToast] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  // Initialize user from localStorage
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('recipe_user');
-      const storedToken = localStorage.getItem('recipe_token');
-      if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (err) {
-      console.error('Failed to load user from localStorage:', err);
-    }
-  }, []);
 
   // Trigger toast alert
   const showToast = (message, type = 'success') => {
@@ -37,21 +21,6 @@ export default function App() {
     setTimeout(() => {
       setToast(null);
     }, 4000);
-  };
-
-  // Auth Success Handler
-  const handleAuthSuccess = (userData, token) => {
-    setUser(userData);
-    showToast(`Welcome to Vyanjan, Chef ${userData.name}!`, 'success');
-  };
-
-  // Logout Handler
-  const handleLogout = () => {
-    localStorage.removeItem('recipe_token');
-    localStorage.removeItem('recipe_user');
-    setUser(null);
-    setActiveTab('home');
-    showToast('Logged out successfully.', 'success');
   };
 
   // Called when a new recipe is uploaded
@@ -83,25 +52,11 @@ export default function App() {
           </div>
         )}
 
-        {/* Main Navbar with Theme Toggle */}
+        {/* Main Navbar with Theme Toggle & Multi-Language */}
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          user={user}
-          onOpenAuth={() => setAuthModalOpen(true)}
-          onLogout={handleLogout}
         />
-
-        {/* Auth Modal (Lazy-Loaded) */}
-        <Suspense fallback={null}>
-          {authModalOpen && (
-            <AuthModal
-              isOpen={authModalOpen}
-              onClose={() => setAuthModalOpen(false)}
-              onAuthSuccess={handleAuthSuccess}
-            />
-          )}
-        </Suspense>
 
         {/* Main Content Area with Suspense and Error Boundary */}
         <main className="flex-1">
@@ -111,43 +66,20 @@ export default function App() {
               <Home
                 onNavigateToAdd={() => setActiveTab('add')}
                 showNotification={showToast}
-                currentUser={user}
               />
             )}
 
-            {/* Tab 2: My Recipes (Protected) */}
+            {/* Tab 2: My Kitchen / All Recipes */}
             {activeTab === 'my-recipes' && (
-              user ? (
-                <MyRecipes
-                  user={user}
-                  onNavigateToAdd={() => setActiveTab('add')}
-                  showNotification={showToast}
-                />
-              ) : (
-                <div className="max-w-md mx-auto px-4 py-24 text-center">
-                  <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-stone-200 dark:border-zinc-800 shadow-card">
-                    <ChefHat className="w-12 h-12 text-brand-600 dark:text-brand-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-stone-900 dark:text-white">Sign in to View Your Kitchen</h2>
-                    <p className="text-stone-500 dark:text-zinc-400 text-xs mt-2">
-                      Access your personal culinary notebook, edit your dishes, and manage your published recipes on Vyanjan.
-                    </p>
-                    <button
-                      onClick={() => setAuthModalOpen(true)}
-                      className="mt-6 px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-600/30 inline-flex items-center gap-2"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>Sign In</span>
-                    </button>
-                  </div>
-                </div>
-              )
+              <MyRecipes
+                onNavigateToAdd={() => setActiveTab('add')}
+                showNotification={showToast}
+              />
             )}
 
             {/* Tab 3: Add Recipe */}
             {activeTab === 'add' && (
               <AddRecipe
-                user={user}
-                onOpenAuth={() => setAuthModalOpen(true)}
                 onRecipeCreated={handleRecipeCreated}
                 onCancel={() => setActiveTab('home')}
               />

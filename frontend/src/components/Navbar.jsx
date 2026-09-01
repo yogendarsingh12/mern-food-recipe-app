@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Utensils, Plus, Compass, Sparkles, LogIn, LogOut, User, ChefHat, Menu, X } from 'lucide-react';
+import { Utensils, Plus, Compass, ChefHat, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LanguageSelector from './LanguageSelector';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLogout }) {
+export default function Navbar({ activeTab, setActiveTab }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -53,20 +53,18 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLo
               <span>{t('explore')}</span>
             </button>
 
-            {/* My Kitchen */}
-            {user && (
-              <button
-                onClick={() => handleTabClick('my-recipes')}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 ${
-                  activeTab === 'my-recipes'
-                    ? 'bg-stone-900 dark:bg-zinc-800 text-white shadow-md'
-                    : 'text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/80 dark:hover:bg-zinc-850'
-                }`}
-              >
-                <ChefHat className="w-4 h-4 text-brand-500" />
-                <span>{t('myKitchen')}</span>
-              </button>
-            )}
+            {/* My Kitchen / Recipes */}
+            <button
+              onClick={() => handleTabClick('my-recipes')}
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 ${
+                activeTab === 'my-recipes'
+                  ? 'bg-stone-900 dark:bg-zinc-800 text-white shadow-md'
+                  : 'text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/80 dark:hover:bg-zinc-850'
+              }`}
+            >
+              <ChefHat className="w-4 h-4 text-brand-500" />
+              <span>{t('myKitchen')}</span>
+            </button>
 
             {/* Share Recipe Button */}
             <button
@@ -86,35 +84,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLo
 
             {/* Dark / Light Theme Toggle */}
             <ThemeToggle />
-
-            {/* User Profile / Auth */}
-            {user ? (
-              <div className="flex items-center gap-2 pl-3 border-l border-stone-200 dark:border-zinc-800">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-stone-100 dark:bg-zinc-850 border border-stone-200/80 dark:border-zinc-800">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-600 to-amber-500 text-white text-[11px] font-black flex items-center justify-center">
-                    {user.name?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="max-w-[100px] truncate text-xs font-bold text-stone-800 dark:text-zinc-200">
-                    {user.name}
-                  </span>
-                </div>
-                <button
-                  onClick={onLogout}
-                  title={t('signOut')}
-                  className="p-2.5 rounded-2xl text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={onOpenAuth}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 border-stone-300 dark:border-zinc-700 font-bold text-xs sm:text-sm text-stone-800 dark:text-zinc-200 hover:border-stone-900 dark:hover:border-white hover:bg-stone-900 dark:hover:bg-white hover:text-white dark:hover:text-zinc-950 transition-all duration-200"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>{t('signIn')}</span>
-              </button>
-            )}
           </div>
 
           {/* Mobile Right Actions: Language + Theme Toggle + Hamburger Toggle */}
@@ -136,18 +105,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLo
       {/* Mobile Drawer Navigation Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-2xl border-b border-stone-200 dark:border-zinc-800 px-4 py-5 space-y-3 shadow-xl animate-fadeIn">
-          {user && (
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 dark:bg-zinc-900 border border-orange-200/60 dark:border-zinc-800 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white font-bold flex items-center justify-center">
-                {user.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 truncate">
-                <p className="text-xs font-bold text-stone-900 dark:text-white truncate">{user.name}</p>
-                <p className="text-[11px] text-stone-500 dark:text-zinc-400 truncate">{user.email}</p>
-              </div>
-            </div>
-          )}
-
           <button
             onClick={() => handleTabClick('home')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-left transition-colors ${
@@ -160,19 +117,17 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLo
             <span>{t('explore')}</span>
           </button>
 
-          {user && (
-            <button
-              onClick={() => handleTabClick('my-recipes')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-left transition-colors ${
-                activeTab === 'my-recipes'
-                  ? 'bg-stone-900 dark:bg-zinc-800 text-white'
-                  : 'text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-850'
-              }`}
-            >
-              <ChefHat className="w-4 h-4 text-brand-500" />
-              <span>{t('myKitchen')}</span>
-            </button>
-          )}
+          <button
+            onClick={() => handleTabClick('my-recipes')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-left transition-colors ${
+              activeTab === 'my-recipes'
+                ? 'bg-stone-900 dark:bg-zinc-800 text-white'
+                : 'text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-850'
+            }`}
+          >
+            <ChefHat className="w-4 h-4 text-brand-500" />
+            <span>{t('myKitchen')}</span>
+          </button>
 
           <button
             onClick={() => handleTabClick('add')}
@@ -185,32 +140,6 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onLo
             <Plus className="w-4 h-4 text-brand-500 stroke-[3]" />
             <span>{t('shareRecipe')}</span>
           </button>
-
-          <div className="pt-3 border-t border-stone-200 dark:border-zinc-800">
-            {user ? (
-              <button
-                onClick={() => {
-                  onLogout();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{t('signOut')}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  onOpenAuth();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-stone-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-sm shadow-md"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>{t('signIn')}</span>
-              </button>
-            )}
-          </div>
         </div>
       )}
     </header>

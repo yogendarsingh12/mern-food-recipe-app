@@ -6,7 +6,7 @@ import { fetchMyRecipes, deleteRecipe } from '../services/api';
 import { ChefHat, Plus, AlertCircle, RefreshCw, BookOpen, Layers, Award } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
+export default function MyRecipes({ onNavigateToAdd, showNotification }) {
   const { t } = useLanguage();
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,10 +33,8 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
   };
 
   useEffect(() => {
-    if (user) {
-      loadMyRecipes();
-    }
-  }, [user]);
+    loadMyRecipes();
+  }, []);
 
   const handleDeleteRecipe = async (id) => {
     try {
@@ -66,7 +64,7 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-brand-500/25 shrink-0">
-              {user?.name?.charAt(0).toUpperCase()}
+              <ChefHat className="w-8 h-8" />
             </div>
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-200/60 dark:bg-brand-950/80 text-brand-900 dark:text-amber-400 text-xs font-black uppercase tracking-wider mb-2">
@@ -74,7 +72,7 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
                 <span>{t('myNotebookTitle')}</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-stone-900 dark:text-white tracking-tight font-display">
-                Chef {user?.name}'s Kitchen
+                {t('myKitchen')}
               </h1>
               <p className="text-stone-600 dark:text-zinc-400 text-xs sm:text-sm mt-1 max-w-xl font-medium">
                 {t('myNotebookSubtitle')}
@@ -85,7 +83,7 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={loadMyRecipes}
-              title="Refresh your recipes"
+              title="Refresh recipes"
               className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 hover:bg-stone-50 dark:hover:bg-zinc-750 text-stone-700 dark:text-zinc-300 transition-colors shadow-xs"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -112,7 +110,7 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
           </div>
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span>Vyanjan Community Chef</span>
+            <span>Vyanjan Culinary Library</span>
           </div>
         </div>
       </div>
@@ -139,7 +137,7 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
       {!loading && error && (
         <div className="max-w-lg mx-auto text-center py-16 px-4 bg-white dark:bg-zinc-900 rounded-3xl border border-red-200 dark:border-red-900/60 shadow-card">
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-stone-900 dark:text-white">Failed to load your recipes</h3>
+          <h3 className="text-lg font-bold text-stone-900 dark:text-white">Failed to load recipes</h3>
           <p className="text-stone-500 dark:text-zinc-400 text-xs mt-1">{error}</p>
           <button
             onClick={loadMyRecipes}
@@ -177,7 +175,6 @@ export default function MyRecipes({ user, onNavigateToAdd, showNotification }) {
             <RecipeCard
               key={recipe._id}
               recipe={recipe}
-              currentUser={user}
               onSelect={(r) => setSelectedRecipe(r)}
               onDelete={handleDeleteRecipe}
               onEdit={(r) => setEditingRecipe(r)}

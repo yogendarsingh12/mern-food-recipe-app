@@ -8,15 +8,15 @@ import {
   AlertCircle, 
   ArrowLeft,
   Sparkles,
-  Lock,
-  LogIn
+  ChefHat
 } from 'lucide-react';
 import { createRecipe } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel }) {
+export default function AddRecipe({ onRecipeCreated, onCancel }) {
   const { t } = useLanguage();
   const [title, setTitle] = useState('');
+  const [authorName, setAuthorName] = useState('');
   const [description, setDescription] = useState('');
   const [ingredientInput, setIngredientInput] = useState('');
   const [ingredients, setIngredients] = useState([]);
@@ -29,40 +29,6 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
   const [successMsg, setSuccessMsg] = useState('');
 
   const fileInputRef = useRef(null);
-
-  if (!user) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-24 text-center animate-fadeIn">
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 sm:p-12 border border-stone-200 dark:border-zinc-800 shadow-xl">
-          <div className="w-18 h-18 rounded-3xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white flex items-center justify-center mx-auto mb-6 shadow-glow">
-            <Lock className="w-8 h-8" />
-          </div>
-          <h2 className="text-3xl font-black text-stone-900 dark:text-white tracking-tight font-display">
-            {t('chefSignInRequired')}
-          </h2>
-          <p className="text-stone-600 dark:text-zinc-400 text-sm mt-3 max-w-md mx-auto leading-relaxed">
-            {t('signInToAccessKitchen')}
-          </p>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={onCancel}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl border border-stone-300 dark:border-zinc-700 font-bold text-stone-700 dark:text-zinc-300 hover:bg-stone-50 dark:hover:bg-zinc-800 text-xs transition-colors"
-            >
-              {t('explore')}
-            </button>
-            <button
-              onClick={onOpenAuth}
-              className="w-full sm:w-auto px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>{t('signIn')} / {t('createAccount')}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const handleAddIngredient = () => {
     const trimmed = ingredientInput.trim();
@@ -149,6 +115,7 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
 
       const formData = new FormData();
       formData.append('title', title.trim());
+      formData.append('authorName', authorName.trim() || 'Community Chef');
       formData.append('description', description.trim());
       formData.append('ingredients', JSON.stringify(finalIngredients));
       formData.append('instructions', instructions.trim());
@@ -189,7 +156,7 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
             <Sparkles className="w-6 h-6 text-amber-500 fill-amber-500" />
           </h1>
           <p className="mt-1.5 text-stone-600 dark:text-zinc-400 text-xs sm:text-sm">
-            Posting as <strong className="text-stone-900 dark:text-white">Chef {user.name}</strong> &bull; Share your culinary creation with food lovers.
+            Share your authentic culinary creations with food lovers worldwide.
           </p>
         </div>
       </div>
@@ -227,6 +194,22 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
           />
         </div>
 
+        {/* Chef / Author Name */}
+        <div>
+          <label className="block text-xs font-black uppercase tracking-wider text-stone-800 dark:text-zinc-200 mb-2 flex items-center gap-1.5">
+            <ChefHat className="w-4 h-4 text-brand-500" />
+            <span>Chef / Author Name <span className="text-stone-400 dark:text-zinc-500 font-normal normal-case">(Optional - defaults to "Community Chef")</span></span>
+          </label>
+          <input
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="e.g. Chef Sanjeev or Gordon"
+            maxLength={60}
+            className="w-full px-5 py-3.5 rounded-2xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-zinc-500 text-sm font-medium transition-all"
+          />
+        </div>
+
         {/* Description */}
         <div>
           <label className="block text-xs font-black uppercase tracking-wider text-stone-800 dark:text-zinc-200 mb-2">
@@ -248,63 +231,61 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
             {t('coverPhoto')} <span className="text-red-500">*</span>
           </label>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            accept="image/png, image/jpeg, image/jpg, image/webp"
-            className="hidden"
-          />
-
-          {!imagePreview ? (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-stone-300 dark:border-zinc-700 hover:border-brand-500 dark:hover:border-brand-400 hover:bg-orange-50/30 dark:hover:bg-zinc-800/40 rounded-3xl p-10 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center group"
-            >
-              <div className="w-16 h-16 rounded-3xl bg-orange-100 dark:bg-zinc-800 group-hover:scale-110 text-brand-600 dark:text-amber-400 flex items-center justify-center mb-4 transition-all duration-300 shadow-sm">
-                <UploadCloud className="w-8 h-8" />
-              </div>
-              <p className="text-sm font-bold text-stone-800 dark:text-zinc-200">
-                {t('dropPhotoHere')}
-              </p>
-              <p className="text-xs text-stone-400 dark:text-zinc-500 mt-1 font-medium">
-                {t('supportsFormats')}
-              </p>
-            </div>
-          ) : (
-            <div className="relative rounded-3xl overflow-hidden border border-stone-200 dark:border-zinc-800 bg-stone-100 dark:bg-zinc-800 max-h-80 shadow-md">
+          {imagePreview ? (
+            <div className="relative rounded-3xl overflow-hidden border-2 border-stone-200 dark:border-zinc-800 group max-h-96">
               <img
                 src={imagePreview}
-                alt="Upload Preview"
+                alt="Recipe Preview"
                 className="w-full h-80 object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-xs opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              <div className="absolute inset-0 bg-stone-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-5 py-2.5 bg-white dark:bg-zinc-900 text-stone-900 dark:text-white font-bold rounded-xl text-xs shadow-lg hover:bg-stone-100 transition-all"
+                  className="px-4 py-2 rounded-xl bg-white text-stone-900 text-xs font-bold shadow-lg hover:bg-stone-100 transition-colors"
                 >
                   Change Photo
                 </button>
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl text-xs shadow-lg hover:bg-red-700 transition-all"
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold shadow-lg hover:bg-red-700 transition-colors flex items-center gap-1"
                 >
-                  Remove
+                  <X className="w-4 h-4" />
+                  <span>Remove</span>
                 </button>
               </div>
             </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-stone-300 dark:border-zinc-700 hover:border-brand-500 dark:hover:border-brand-400 rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-colors bg-stone-50/50 dark:bg-zinc-950/50 hover:bg-orange-50/20"
+            >
+              <UploadCloud className="w-12 h-12 text-stone-400 dark:text-zinc-500 mx-auto mb-3" />
+              <p className="text-sm font-bold text-stone-800 dark:text-zinc-200">
+                Click to upload recipe cover photo
+              </p>
+              <p className="text-xs text-stone-400 dark:text-zinc-500 mt-1">
+                PNG, JPG, WebP up to 5MB
+              </p>
+            </div>
           )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
         </div>
 
-        {/* Ingredients Builder */}
+        {/* Ingredients Tagging */}
         <div>
           <label className="block text-xs font-black uppercase tracking-wider text-stone-800 dark:text-zinc-200 mb-2">
             {t('ingredients')} <span className="text-red-500">*</span>
           </label>
-          
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-3">
             <input
               type="text"
               value={ingredientInput}
@@ -315,31 +296,32 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
                   handleAddIngredient();
                 }
               }}
-              placeholder={t('typeIngredientPlaceholder')}
-              className="flex-1 px-5 py-3.5 rounded-2xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-zinc-500 text-sm font-medium transition-all"
+              placeholder="Type an ingredient & press Enter or Add (e.g. 2 tbsp olive oil)"
+              className="flex-1 px-5 py-3 rounded-2xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-zinc-500 text-sm font-medium transition-all"
             />
             <button
               type="button"
               onClick={handleAddIngredient}
-              className="px-6 py-3.5 rounded-2xl bg-stone-900 dark:bg-white hover:bg-stone-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors shrink-0 shadow-md"
+              className="px-5 py-3 rounded-2xl bg-stone-900 dark:bg-zinc-800 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shrink-0 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span>{t('addBtn')}</span>
+              <span>{t('add')}</span>
             </button>
           </div>
 
+          {/* Chips */}
           {ingredients.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2 p-4 bg-stone-50 dark:bg-zinc-950 rounded-2xl border border-stone-200 dark:border-zinc-800">
-              {ingredients.map((ing, idx) => (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {ingredients.map((item, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-stone-300 dark:border-zinc-700 text-stone-800 dark:text-zinc-200 text-xs font-bold shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-orange-100 dark:bg-zinc-800 text-brand-800 dark:text-brand-300 text-xs font-bold border border-orange-200 dark:border-zinc-700 animate-fadeIn"
                 >
-                  <span>{ing}</span>
+                  <span>{item}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveIngredient(idx)}
-                    className="w-4 h-4 rounded-full text-stone-400 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center transition-colors"
+                    className="hover:text-red-600 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -349,46 +331,45 @@ export default function AddRecipe({ user, onOpenAuth, onRecipeCreated, onCancel 
           )}
         </div>
 
-        {/* Cooking Instructions */}
+        {/* Instructions */}
         <div>
           <label className="block text-xs font-black uppercase tracking-wider text-stone-800 dark:text-zinc-200 mb-2">
-            {t('cookingInstructions')} <span className="text-red-500">*</span>
+            {t('instructions')} <span className="text-red-500">*</span>
           </label>
           <textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder={t('instructionsPlaceholder')}
+            placeholder="Step 1: Heat olive oil in a skillet...&#10;Step 2: Add garlic and saute until golden...&#10;Step 3: Serve hot with fresh herbs."
             rows={7}
-            className="w-full px-5 py-4 rounded-2xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-zinc-500 text-sm leading-relaxed font-medium transition-all"
+            className="w-full px-5 py-3.5 rounded-2xl border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-zinc-500 text-sm font-medium transition-all"
             required
           />
         </div>
 
         {/* Form Actions */}
-        <div className="pt-6 border-t border-stone-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-end gap-3">
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-stone-100 dark:border-zinc-800">
           <button
             type="button"
             onClick={onCancel}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto px-7 py-3.5 rounded-2xl border border-stone-300 dark:border-zinc-700 font-bold text-stone-700 dark:text-zinc-300 hover:bg-stone-50 dark:hover:bg-zinc-800 transition-colors text-xs"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-stone-300 dark:border-zinc-700 font-bold text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-800 text-xs sm:text-sm transition-colors"
           >
-            {t('cancelBtn')}
+            Cancel
           </button>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full sm:w-auto px-9 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-orange-500 hover:from-brand-500 hover:to-orange-400 text-white font-black text-xs sm:text-sm shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-60 hover:-translate-y-0.5"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-orange-500 hover:from-brand-500 hover:to-orange-400 text-white font-extrabold text-xs sm:text-sm shadow-xl shadow-brand-500/30 flex items-center justify-center gap-2 transition-all disabled:opacity-60 hover:-translate-y-0.5"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{t('publishing')}</span>
+                <span>{t('publishingRecipe')}</span>
               </>
             ) : (
               <>
-                <UploadCloud className="w-4 h-4" />
-                <span>{t('publishBtn')}</span>
+                <Sparkles className="w-4 h-4" />
+                <span>{t('publishRecipe')}</span>
               </>
             )}
           </button>

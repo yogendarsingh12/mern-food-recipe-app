@@ -1,14 +1,28 @@
 const Recipe = require('../models/Recipe');
 
 /**
- * @desc    Get all recipes
+ * @desc    Get all recipes with search and category filtering
  * @route   GET /api/recipes
  * @access  Public
  */
 const getAllRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find()
-      .populate('user', 'name avatar email')
+    const { search } = req.query;
+    let query = {};
+
+    if (search) {
+      query = {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { ingredients: { $regex: search, $options: 'i' } },
+          { authorName: { $regex: search, $options: 'i' } },
+        ],
+      };
+    }
+
+    const recipes = await Recipe.find(query)
+      .populate('user', 'name email')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -17,7 +31,7 @@ const getAllRecipes = async (req, res) => {
       data: recipes,
     });
   } catch (error) {
-    console.error('[Get Recipes Error]:', error.message);
+    console.error('[Get All Recipes Error]:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while fetching recipes',
@@ -27,13 +41,13 @@ const getAllRecipes = async (req, res) => {
 };
 
 /**
- * @desc    Get all recipes created by current logged in user
+ * @desc    Get current user recipes (Public/Open)
  * @route   GET /api/recipes/my/user
- * @access  Private
+ * @access  Public
  */
 const getMyRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const recipes = await Recipe.find().sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -41,10 +55,10 @@ const getMyRecipes = async (req, res) => {
       data: recipes,
     });
   } catch (error) {
-    console.error('[Get My Recipes Error]:', error.message);
+    console.error('[Get My Recipes Error]:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while fetching your recipes',
+      message: 'Server error while fetching recipes',
       error: error.message,
     });
   }
@@ -57,19 +71,21 @@ const getMyRecipes = async (req, res) => {
  */
 const getRecipeById = async (req, res) => {
   try {
-    const recipe = await Recipe.findById(req.params.id).populate('user', 'name avatar email');
+    const recipe = await Recipe.findById(req.params.id).populate('user', 'name email');
+
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found',
       });
     }
+
     res.status(200).json({
       success: true,
       data: recipe,
     });
   } catch (error) {
-    console.error('[Get Recipe By ID Error]:', error.message);
+    console.error('[Get Recipe By ID Error]:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while fetching recipe details',
@@ -79,15 +95,14 @@ const getRecipeById = async (req, res) => {
 };
 
 /**
- * @desc    Create a new recipe with Cloudinary image upload (Protected)
+ * @desc    Create a new recipe with Cloudinary image upload (Public)
  * @route   POST /api/recipes
- * @access  Private (Authenticated Users)
+ * @access  Public
  */
 const createRecipe = async (req, res) => {
   try {
-    const { title, description, ingredients, instructions } = req.body;
+    const { title, description, ingredients, instructions, authorName } = req.body;
 
-    // 1. Verify that image was uploaded via multer-storage-cloudinary
     const imageUrl = req.file?.path || req.file?.secure_url || req.file?.url;
 
     if (!imageUrl) {
@@ -97,7 +112,6 @@ const createRecipe = async (req, res) => {
       });
     }
 
-    // 2. Validate required text fields
     if (!title || !title.trim()) {
       return res.status(400).json({
         success: false,
@@ -112,7 +126,6 @@ const createRecipe = async (req, res) => {
       });
     }
 
-    // 3. Robustly parse ingredients (supports JSON string, comma-separated string, or array)
     let parsedIngredients = [];
     if (typeof ingredients === 'string') {
       try {
@@ -136,24 +149,21 @@ const createRecipe = async (req, res) => {
       });
     }
 
-    // 4. Determine user & author details
-    const userId = req.user ? req.user._id : null;
-    const authorName = req.user ? req.user.name : (req.body.authorName || 'Community Chef');
+    const finalAuthor = authorName && authorName.trim() ? authorName.trim() : 'Community Chef';
 
-    // 5. Save recipe to MongoDB
     const recipe = await Recipe.create({
       title: title.trim(),
       description: description ? description.trim() : '',
       ingredients: parsedIngredients,
       instructions: instructions.trim(),
       imageUrl: imageUrl,
-      user: userId,
-      authorName: authorName,
+      user: null,
+      authorName: finalAuthor,
     });
 
     res.status(201).json({
       success: true,
-      message: 'Recipe created and uploaded to Cloudinary successfully!',
+      message: 'Recipe created and uploaded successfully!',
       data: recipe,
     });
   } catch (error) {
@@ -166,13 +176,13 @@ const createRecipe = async (req, res) => {
 };
 
 /**
- * @desc    Update a recipe (Protected: Owner or Admin)
+ * @desc    Update a recipe (Public)
  * @route   PUT /api/recipes/:id
- * @access  Private (Owner only)
+ * @access  Public
  */
 const updateRecipe = async (req, res) => {
   try {
-    const { title, description, ingredients, instructions } = req.body;
+    const { title, description, ingredients, instructions, authorName } = req.body;
 
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
@@ -182,20 +192,6 @@ const updateRecipe = async (req, res) => {
       });
     }
 
-    // Check ownership
-    if (
-      recipe.user &&
-      req.user &&
-      recipe.user.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'Forbidden. You can only edit recipes you have created.',
-      });
-    }
-
-    // Parse ingredients if provided
     let parsedIngredients = recipe.ingredients;
     if (ingredients) {
       if (typeof ingredients === 'string') {
@@ -214,10 +210,10 @@ const updateRecipe = async (req, res) => {
 
     if (title) recipe.title = title.trim();
     if (description !== undefined) recipe.description = description.trim();
+    if (authorName) recipe.authorName = authorName.trim();
     if (parsedIngredients.length > 0) recipe.ingredients = parsedIngredients;
     if (instructions) recipe.instructions = instructions.trim();
 
-    // If new image was uploaded via Multer
     if (req.file) {
       recipe.imageUrl = req.file.path || req.file.secure_url || req.file.url;
     }
@@ -239,9 +235,9 @@ const updateRecipe = async (req, res) => {
 };
 
 /**
- * @desc    Delete a recipe by ID (Protected: Owner or Admin)
+ * @desc    Delete a recipe by ID (Public)
  * @route   DELETE /api/recipes/:id
- * @access  Private (Owner only)
+ * @access  Public
  */
 const deleteRecipe = async (req, res) => {
   try {
@@ -250,19 +246,6 @@ const deleteRecipe = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found',
-      });
-    }
-
-    // Check ownership
-    if (
-      recipe.user &&
-      req.user &&
-      recipe.user.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'Forbidden. You can only delete recipes that you have created.',
       });
     }
 
