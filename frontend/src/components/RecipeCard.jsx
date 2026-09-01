@@ -1,14 +1,13 @@
 import React, { useState, memo } from 'react';
-import { Clock, Eye, Trash2, Edit3, Layers, ArrowRight, Heart } from 'lucide-react';
+import { Clock, Eye, Layers, ArrowRight, Heart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { getTranslatedRecipe } from '../utils/recipeTranslator';
 import LazyImage from './LazyImage';
 
-function RecipeCardComponent({ recipe, onSelect, onDelete, onEdit, currentUser }) {
+function RecipeCardComponent({ recipe, onSelect }) {
   const { lang, t } = useLanguage();
   const displayRecipe = getTranslatedRecipe(recipe, lang);
 
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isLiked, setIsLiked] = useState(() => {
     try {
       const savedLikes = JSON.parse(localStorage.getItem('recipe_likes') || '{}');
@@ -17,12 +16,6 @@ function RecipeCardComponent({ recipe, onSelect, onDelete, onEdit, currentUser }
       return false;
     }
   });
-
-  const isOwner = currentUser && (
-    (recipe.user?._id && recipe.user._id === currentUser._id) ||
-    recipe.user === currentUser._id ||
-    currentUser.role === 'admin'
-  );
 
   const toggleLike = (e) => {
     e.stopPropagation();
@@ -38,25 +31,6 @@ function RecipeCardComponent({ recipe, onSelect, onDelete, onEdit, currentUser }
       localStorage.setItem('recipe_likes', JSON.stringify(savedLikes));
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const handleDelete = async (e) => {
-    e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete "${displayRecipe.title}"?`)) {
-      setIsDeleting(true);
-      try {
-        await onDelete(recipe._id);
-      } finally {
-        setIsDeleting(false);
-      }
-    }
-  };
-
-  const handleEdit = (e) => {
-    e.stopPropagation();
-    if (onEdit) {
-      onEdit(recipe);
     }
   };
 
@@ -90,43 +64,18 @@ function RecipeCardComponent({ recipe, onSelect, onDelete, onEdit, currentUser }
             <span>{displayRecipe.ingredients?.length || 0} {t('ingredients')}</span>
           </span>
 
-          <div className="flex items-center gap-2">
-            {/* Interactive Favorite / Like button */}
-            <button
-              onClick={toggleLike}
-              title={isLiked ? 'Remove from favorites' : 'Add to favorites'}
-              className={`w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 shadow-md ${
-                isLiked
-                  ? 'bg-rose-500 text-white scale-110 shadow-rose-500/30'
-                  : 'bg-black/40 hover:bg-black/70 text-white hover:scale-105'
-              }`}
-            >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-white stroke-white' : 'stroke-white'}`} />
-            </button>
-
-            {/* Owner Actions */}
-            {isOwner && (
-              <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                {onEdit && (
-                  <button
-                    onClick={handleEdit}
-                    title="Edit your recipe"
-                    className="w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-900/90 hover:bg-blue-600 hover:text-white text-stone-700 dark:text-zinc-200 backdrop-blur-md flex items-center justify-center transition-all shadow-md"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  title="Delete recipe"
-                  className="w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-900/90 hover:bg-red-600 hover:text-white text-stone-700 dark:text-zinc-200 backdrop-blur-md flex items-center justify-center transition-all shadow-md"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Interactive Favorite / Like button */}
+          <button
+            onClick={toggleLike}
+            title={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+            className={`w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 shadow-md ${
+              isLiked
+                ? 'bg-rose-500 text-white scale-110 shadow-rose-500/30'
+                : 'bg-black/40 hover:bg-black/70 text-white hover:scale-105'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isLiked ? 'fill-white stroke-white' : 'stroke-white'}`} />
+          </button>
         </div>
 
         {/* Author badge on bottom of image */}
@@ -136,7 +85,7 @@ function RecipeCardComponent({ recipe, onSelect, onDelete, onEdit, currentUser }
               {(recipe.user?.name || recipe.authorName || 'C').charAt(0).toUpperCase()}
             </div>
             <span className="text-xs font-bold truncate max-w-[140px]">
-              {recipe.user?.name || recipe.authorName || 'Community Chef'}
+              {recipe.user?.name || recipe.authorName || 'Master Chef'}
             </span>
           </div>
 
